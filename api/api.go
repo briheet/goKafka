@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -40,14 +41,18 @@ func (s *ApiServer) Serve() {
 func (s *ApiServer) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 	var newUser User
 
-	println("in HandleUserRegister")
-	// err := json.NewDecoder(r.Body).Decode(&newUser)
-	// if err != nil {
-	// http.Error(w, err.Error(), http.StatusBadRequest)
-	// return
-	// }
+	err := json.NewDecoder(r.Body).Decode(&newUser)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newUser)
+
+	if err := json.NewEncoder(w).Encode(newUser); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Println("ending mein error hain")
+		return
+	}
 }
