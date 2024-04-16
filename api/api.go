@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 type ApiServer struct {
@@ -28,17 +26,27 @@ type User struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (s *ApiServer) Serve() {
-	router := mux.NewRouter()
-	subrouter := router.PathPrefix("/api/v1").Subrouter()
+func (s *ApiServer) Run() error {
+	router := http.NewServeMux()
 
-	subrouter.HandleFunc("/user", s.HandleUserRegister).Methods("POST")
+	router.HandleFunc("POST /user", s.HandleUserRegister)
 
-	log.Printf("starting the api at %s", s.port)
-	log.Fatal(http.ListenAndServe(s.port, subrouter))
+	server := http.Server{
+		Addr:    s.port,
+		Handler: router,
+	}
+
+	log.Printf("Server has started at %s", s.port)
+
+	return server.ListenAndServe()
 }
 
 func (s *ApiServer) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	var newUser User
 
 	err := json.NewDecoder(r.Body).Decode(&newUser)
